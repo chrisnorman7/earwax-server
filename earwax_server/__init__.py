@@ -110,18 +110,21 @@ class ConnectionContext:
 
     @logger.default
     def _default_logger(instance: 'ConnectionContext') -> Logger:
-        """Construct a logger using :attr:`instance.address
-        <ConnectionContext.address>`.
+        """Construct a logger.
+
+        uses :attr:`instance.address <ConnectionContext.address>`.
 
         :param instance: The context the logger should be created for.
         """
         return getLogger(f'{instance.hostname}:{instance.port}')
 
     def send_string(self, string: str) -> None:
-        """Used to send a string to :attr:`self.socket <ConnectionContext.socket>`.
+        r"""Send an unencoded string to this context.
+
+        Sends the string to :attr:`self.socket <ConnectionContext.socket>`.
 
         The string is automatically encoded to a bytes-like object, and
-        ``'\\r\\n'`` is appended.
+        ``'\r\n'`` is appended.
 
         :param string: The string to send (minus the end of line terminator).
 
@@ -133,9 +136,12 @@ class ConnectionContext:
     def send_bytes(
         self, buf: bytes, encoding: Optional[str] = None
     ) -> None:
-        """Send a bytes-like object to :attr:`self.socket <ConnectionContext.socket>`.
+        r"""Send an encoded string to this context.
 
-        The string will have ``'\\r\\n'`` appended to it.
+        Sendds a bytes-like object to :attr:`self.socket
+        <ConnectionContext.socket>`.
+
+        The string will have ``'\r\n'`` appended to it.
 
         :param buf: The bytes-like object to send.
 
@@ -151,14 +157,18 @@ class ConnectionContext:
         self.socket.sendall(buf + terminator)
 
     def send_raw(self, data: bytes) -> None:
-        """Send raw data to :attr:`self.socket <ConnectionContext.socket>`.
+        """Send data to this context.
+
+        Sends raw data to :attr:`self.socket <ConnectionContext.socket>`.
 
         :param data: The data to send.
         """
         self.socket.sendall(data)
 
     def disconnect(self) -> None:
-        """Disconnect the underlying :attr:`socket
+        """Disconnect this context.
+
+        Disconnects the underlying :attr:`socket
         <ConnectionContext.socket>`.
         """
         self.socket.close()
@@ -170,6 +180,9 @@ class Server:
 
     By attaching event handlers to instances of this class, you can build
     servers with very little code.
+
+    When you have attached all the events, use the :meth:`~Server.run` method
+    to start listening for connections.
 
     :ivar connections: Every context that is connected to this server.
 
@@ -236,9 +249,8 @@ class Server:
     ]:
         """Register a new event.
 
-        The new event handler will be put at the beginning of the event
-        handlers list, thus allowing newer event handlers to override older
-        ones.
+        The new event handler will be prepended to the event handlers list,
+        thus allowing newer event handlers to override older ones.
 
         When the :meth:`Server.dispatch_event` is used, the list of handlers
         will be iterated over, and each handler executed.
@@ -274,7 +286,9 @@ class Server:
             return inner(value)
 
     def can_connect(self, ctx: ConnectionContext) -> bool:
-        """Return ``True`` if the provided context can connect, ``False`` otherwise.
+        """Determine if a context can connect or not.
+
+        Return ``True`` if the connection is allowed, ``False`` otherwise.
 
         :param ctx: The context that is trying to connect.
         """
@@ -284,7 +298,10 @@ class Server:
         self, socket: GeventSocket,
         address: AddressTuple
     ) -> None:
-        """Handles opening new connections.
+        """Deal with new connections.
+
+        This function is used with :attr:`self.stream_server
+        <Server.stream_server>`.
 
         :param socket: The socket that has just connected.
 
@@ -322,17 +339,21 @@ class Server:
         self.stream_server.serve_forever()
 
     def on_block(self, ctx: ConnectionContext) -> None:
-        """An event which is dispatched when an address has been blocked.
+        """Handle a blocked connection.
+
+        This event is dispatched when an address has been blocked.
 
         :param ctx: The connection context that has been blocked.
         """
         ctx.logger.info('Connection blocked.')
 
     def on_connect(self, ctx: ConnectionContext) -> None:
-        """An event that is dispatched when a new connection is established.
+        """Deal with new connections.
+
+        This event is dispatched when a new connection is established.
 
         By the time this event is dispatched, it has already been established
-        by the :meth:`Server.can_connect` method that this address is allowed
+        by the :meth:`~Server.can_connect` method that this address is allowed
         to connect.
 
         :param ctx: The context that has connected.
@@ -340,14 +361,18 @@ class Server:
         ctx.logger.info('Connection established.')
 
     def on_disconnect(self, ctx: ConnectionContext) -> None:
-        """An event that is dispatched when a connection is closed.
+        """Deal with disconnections.
+
+        This event is dispatched when a connection is closed.
 
         :param ctx: The context that is disconnecting.
         """
         ctx.logger.info('Disconnected.')
 
     def on_data(self, ctx: ConnectionContext, data: bytes) -> None:
-        """An event that fires when some data is received over a connection.
+        """Handle incoming data.
+
+        This event is dispatched when data is received over a connection.
 
         :param ctx: The originating connection context.
 
